@@ -21,7 +21,7 @@ try:
     BOT_AVAILABLE = True
 except ImportError:
     BOT_AVAILABLE = False
-    print("⚠️ pyTelegramBotAPI not installed, bot will not work")
+    print("WARNING: pyTelegramBotAPI not installed, bot will not work")
 
 # ===== KONFIGURATSIYA =====
 BOT_TOKEN = os.getenv('BOT_TOKEN', '8265294721:AAEWhiYC2zTYxPbFpYYFezZGNzKHUumoplE')
@@ -119,7 +119,7 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print(f"✅ Database initialized at: {DB_PATH}")
+    print(f"Database initialized at: {DB_PATH}")
 
 # ===== TELEGRAM BOT =====
 if BOT_AVAILABLE:
@@ -149,11 +149,11 @@ try:
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-        print(f"✅ Static files mounted from {static_dir}")
+        print(f"Static files mounted from {static_dir}")
     else:
-        print(f"⚠️ Static folder not found at {static_dir}")
+        print(f"Warning: Static folder not found at {static_dir}")
 except Exception as e:
-    print(f"⚠️ Static files error: {e}")
+    print(f"Warning: Static files error: {e}")
 
 # Database initialization flag
 _db_initialized = False
@@ -170,31 +170,31 @@ def ensure_db():
 async def startup_event():
     """Server ishga tushganda"""
     print("=" * 60)
-    print("🚀 GarajHub Bot Server ishga tushdi...")
-    print(f"🔧 Port: {PORT}")
-    print(f"🤖 Bot available: {BOT_AVAILABLE}")
-    print(f"💾 Database: {DB_PATH}")
+    print("GarajHub Bot Server starting...")
+    print(f"Port: {PORT}")
+    print(f"Bot available: {BOT_AVAILABLE}")
+    print(f"Database: {DB_PATH}")
     print("=" * 60)
     
     # Initialize database on startup
     try:
         ensure_db()
-        print("✅ Database ready")
+        print("Database ready")
     except Exception as e:
-        print(f"⚠️ Database init warning: {e}")
+        print(f"Database init warning: {e}")
     
     # Bot polling disabled in FastAPI mode - run main.py separately for bot
     if BOT_AVAILABLE:
-        print("⚠️ Telegram Bot API integration active, but polling disabled")
-        print("💡 Run 'python main.py' separately for bot polling functionality")
+        print("Telegram Bot API integration active, but polling disabled")
+        print("Run 'python main.py' separately for bot polling functionality")
 
 # ===== BOT FUNCTIONS =====
 async def run_bot_async():
     """Botni backgroundda ishga tushirish - NOT USED"""
     if not BOT_AVAILABLE or not bot:
-        print("❌ Bot is not available")
+        print("Bot is not available")
         return
-    print("⚠️ Bot polling should be run from main.py, not here")
+    print("Bot polling should be run from main.py, not here")
 
 # ===== API ENDPOINTS =====
 
@@ -462,10 +462,10 @@ async def send_broadcast_task(message: str, user_type: str):
             # 0.1 sekund pauza
             await asyncio.sleep(0.1)
         
-        print(f"✅ Xabar yuborildi: {sent} ta, Yuborilmadi: {failed} ta")
+            print(f"Xabar yuborildi: {sent} ta, Yuborilmadi: {failed} ta")
         
     except Exception as e:
-        print(f"❌ Xabar yuborishda xatolik: {e}")
+        print(f"Xabar yuborishda xatolik: {e}")
 
 # 6. Admin authentication
 @app.post("/api/auth/login")
