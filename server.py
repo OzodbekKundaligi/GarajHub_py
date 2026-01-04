@@ -24,7 +24,7 @@ except ImportError:
     print("WARNING: pyTelegramBotAPI not installed, bot will not work")
 
 # ===== KONFIGURATSIYA =====
-BOT_TOKEN = os.getenv('BOT_TOKEN', '8265294721:AAEWhiYC2zTYxPbFpYYFezZGNzKHUumoplE')
+BOT_TOKEN = os.getenv('BOT_TOKEN', '8545746982:AAH8Dv_JiGplNx_Ut2hN_lWLPFWOz6DxBGo')
 CHANNEL_USERNAME = os.getenv('CHANNEL_USERNAME', '@GarajHub_uz')
 ADMIN_ID = int(os.getenv('ADMIN_ID', '7903688837'))
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -122,10 +122,20 @@ def init_db():
     print(f"Database initialized at: {DB_PATH}")
 
 # ===== TELEGRAM BOT =====
-if BOT_AVAILABLE:
-    bot = telebot.TeleBot(BOT_TOKEN, parse_mode='HTML')
+# Initialize bot only if telebot is installed and BOT_TOKEN looks valid
+bot = None
+if BOT_AVAILABLE and BOT_TOKEN and ':' in BOT_TOKEN:
+    try:
+        bot = telebot.TeleBot(BOT_TOKEN, parse_mode='HTML')
+        print("Telegram bot initialized")
+    except Exception as e:
+        print(f"WARNING: Failed to initialize Telegram bot: {e}")
+        bot = None
+        BOT_AVAILABLE = False
 else:
+    print("WARNING: Telegram bot not initialized (missing or invalid BOT_TOKEN)")
     bot = None
+    BOT_AVAILABLE = False
 
 # ===== FASTAPI APP =====
 app = FastAPI(title="GarajHub Admin", version="2.0")
