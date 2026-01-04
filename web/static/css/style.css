@@ -1,0 +1,48 @@
+/* ===== ASOSIY SOZLAMALAR ===== */
+:root {
+	--primary-color: #4a6fa5;
+	--secondary-color: #6dc5a3;
+	--danger-color: #e74c3c;
+	--warning-color: #f39c12;
+	--success-color: #27ae60;
+	--dark-color: #2c3e50;
+	--light-color: #ecf0f1;
+	--gray-color: #95a5a6;
+	--border-color: #e0e0e0;
+	--card-bg: #ffffff;
+	--sidebar-bg: #2c3e50;
+	--header-bg: #ffffff;
+	--body-bg: #f5f7fa;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+	background-color: var(--body-bg);
+	color: var(--dark-color);
+	min-height: 100vh;
+	overflow-x: hidden;
+}
+
+/* ===== KONTEYNER ===== */
+.container {
+	display: flex;
+	min-height: 100vh;
+}
+
+/* ===== YON PANEL ===== */
+.sidebar {
+	width: 250px;
+	background-color: var(--sidebar-bg);
+	color: white;
+	display: flex;
+	flex-direction: column;
+	transition: width 0.3s;
+}
+
+/* rest of css... */

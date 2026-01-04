@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pyTelegramBotAPI
+PyJWT
+python-jose
+passlib[bcrypt]
+aiofiles
+Jinja2
+python-dotenv
