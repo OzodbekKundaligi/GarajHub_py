@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python server.py"
+startCommand = "python server_minimal.py"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
-healthcheckInterval = 10s
+healthcheckInterval = 10
