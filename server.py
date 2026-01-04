@@ -574,10 +574,10 @@ if __name__ == "__main__":
     # Railway portini olish
     port = int(os.environ.get("PORT", PORT))
     
-    print(f"🌐 Server {port} portida ishga tushmoqda...")
-    print(f"📡 URL: http://0.0.0.0:{port}")
-    print(f"🔗 Admin panel: http://0.0.0.0:{port}/admin")
-    print(f"📊 API: http://0.0.0.0:{port}/api/statistics")
+    print(f"Server starting on port {port}...")
+    print(f"URL: http://0.0.0.0:{port}")
+    print(f"Admin panel: http://0.0.0.0:{port}/admin")
+    print(f"API: http://0.0.0.0:{port}/api/statistics")
     
     # Uvicorn serverini ishga tushirish
     uvicorn.run(
