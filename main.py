@@ -36,6 +36,24 @@ def init_db():
         )
     ''')
     
+    # Migrate: Add missing columns if they don't exist
+    try:
+        cursor.execute('PRAGMA table_info(users)')
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if 'last_name' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN last_name TEXT DEFAULT ""')
+        if 'phone' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ""')
+        if 'gender' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN gender TEXT DEFAULT ""')
+        if 'birth_date' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN birth_date TEXT DEFAULT ""')
+        if 'bio' not in columns:
+            cursor.execute('ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ""')
+    except Exception as e:
+        logging.warning(f"Migration warning (non-critical): {e}")
+    
     # Startuplar jadvali
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS startups (
@@ -53,6 +71,24 @@ def init_db():
             FOREIGN KEY (owner_id) REFERENCES users (user_id)
         )
     ''')
+    
+    # Migrate: Add missing columns to startups table
+    try:
+        cursor.execute('PRAGMA table_info(startups)')
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if 'logo' not in columns:
+            cursor.execute('ALTER TABLE startups ADD COLUMN logo TEXT')
+        if 'group_link' not in columns:
+            cursor.execute('ALTER TABLE startups ADD COLUMN group_link TEXT')
+        if 'started_at' not in columns:
+            cursor.execute('ALTER TABLE startups ADD COLUMN started_at TIMESTAMP')
+        if 'ended_at' not in columns:
+            cursor.execute('ALTER TABLE startups ADD COLUMN ended_at TIMESTAMP')
+        if 'results' not in columns:
+            cursor.execute('ALTER TABLE startups ADD COLUMN results TEXT')
+    except Exception as e:
+        logging.warning(f"Migration warning for startups (non-critical): {e}")
     
     # Startup a'zolari jadvali
     cursor.execute('''
