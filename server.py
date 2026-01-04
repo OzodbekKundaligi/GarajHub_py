@@ -146,9 +146,24 @@ app.add_middleware(
 
 # Static files
 try:
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-except:
-    print("⚠️ Static folder not found")
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+        print(f"✅ Static files mounted from {static_dir}")
+    else:
+        print(f"⚠️ Static folder not found at {static_dir}")
+except Exception as e:
+    print(f"⚠️ Static files error: {e}")
+
+# Database initialization flag
+_db_initialized = False
+
+def ensure_db():
+    """Lazy database initialization"""
+    global _db_initialized
+    if not _db_initialized:
+        init_db()
+        _db_initialized = True
 
 # ===== STARTUP EVENT =====
 @app.on_event("startup")
@@ -161,7 +176,12 @@ async def startup_event():
     print(f"💾 Database: {DB_PATH}")
     print("=" * 60)
     
-    init_db()
+    # Initialize database on startup
+    try:
+        ensure_db()
+        print("✅ Database ready")
+    except Exception as e:
+        print(f"⚠️ Database init warning: {e}")
     
     # Bot polling disabled in FastAPI mode - run main.py separately for bot
     if BOT_AVAILABLE:
@@ -498,53 +518,44 @@ async def admin_login(request: Request):
 async def admin_panel():
     """Admin panel HTML sahifasi"""
     try:
-        return FileResponse("templates/index.html")
-    except:
-        # Agar template topilmasa, oddiy HTML qaytarish
-        html_content = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>GarajHub Admin Panel</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .container { max-width: 800px; margin: 0 auto; }
-                .card { background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0; }
-                .btn { background: #4A6FA5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🚀 GarajHub Admin Panel</h1>
-                <p>Server ishlayapti. Admin panel to'liq versiyasi tez orada qo'shiladi.</p>
-                
-                <div class="card">
-                    <h2>🔧 Server ma'lumotlari</h2>
-                    <p><strong>Status:</strong> ✅ Ishlamoqda</p>
-                    <p><strong>Port:</strong> """ + str(PORT) + """</p>
-                    <p><strong>Bot:</strong> """ + ("✅ Faol" if BOT_AVAILABLE else "❌ O'chirilgan") + """</p>
-                    <p><strong>Database:</strong> """ + ("✅ Mavjud" if os.path.exists(DB_PATH) else "❌ Topilmadi") + """</p>
-                </div>
-                
-                <div class="card">
-                    <h2>📊 Tezkor harakatlar</h2>
-                    <button class="btn" onclick="window.location.href='/health'">Server holati</button>
-                    <button class="btn" onclick="window.location.href='/api/statistics'">Statistika</button>
-                    <button class="btn" onclick="window.location.href='/docs'">API Docs</button>
-                </div>
-                
-                <div class="card">
-                    <h2>🔗 Foydali havolalar</h2>
-                    <p>• <a href="/api/statistics">Statistika API</a></p>
-                    <p>• <a href="/api/users">Foydalanuvchilar</a></p>
-                    <p>• <a href="/api/startups">Startaplar</a></p>
-                    <p>• <a href="/health">Server holati</a></p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        return HTMLResponse(content=html_content)
+        template_path = Path(__file__).parent / "templates" / "index.html"
+        if template_path.exists():
+            return FileResponse(str(template_path))
+    except Exception as e:
+        print(f"⚠️ Template error: {e}")
+    
+    # Fallback HTML
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>GarajHub Admin Panel</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; background: #f9f9f9; }}
+        .container {{ max-width: 800px; margin: 0 auto; }}
+        .card {{ background: white; padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .btn {{ background: #4A6FA5; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }}
+        .status {{ color: #27AE60; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 GarajHub Admin Panel</h1>
+        <div class="card">
+            <h2>✅ Server ishlayapti!</h2>
+            <p><strong>Port:</strong> {PORT}</p>
+            <p><strong>Bot:</strong> <span class="status">{'✅ Faol' if BOT_AVAILABLE else '❌ O\'chirilgan'}</span></p>
+            <p><strong>Database:</strong> <span class="status">{'✅ Mavjud' if os.path.exists(DB_PATH) else '❌ Topilmadi'}</span></p>
+        </div>
+        <div class="card">
+            <h2>🔗 API Endpoints</h2>
+            <button class="btn" onclick="fetch('/health').then(r => r.json()).then(d => alert(JSON.stringify(d, null, 2)))">Health Check</button>
+            <button class="btn" onclick="window.location.href='/api/statistics'">Statistics</button>
+            <button class="btn" onclick="window.location.href='/docs'">API Docs</button>
+        </div>
+    </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 # 8. Utility functions
 def get_uptime():
