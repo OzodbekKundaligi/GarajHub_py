@@ -9,7 +9,7 @@ from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 
 # Bot tokenini environmentdan olish yoki to'g'ridan-to'g'ri yozish
-BOT_TOKEN = os.getenv('BOT_TOKEN', '8265294721:AAEWhiYC2zTYxPbFpYYFezZGNzKHUumoplE')
+BOT_TOKEN = os.getenv('BOT_TOKEN', '8545746982:AAH8Dv_JiGplNx_Ut2hN_lWLPFWOz6DxBGo')
 CHANNEL_USERNAME = '@GarajHub_uz'  # Kanal username
 ADMIN_ID = 7903688837  # Admin ID
 
@@ -590,24 +590,29 @@ def show_startups(message):
     show_startup_page(message.chat.id, 1)
 
 def show_startup_page(chat_id, page):
-    startups, total = get_active_startups(page)
+    # Pagination storage - to track current position
+    if not hasattr(show_startup_page, 'current_page'):
+        show_startup_page.current_page = {}
+    show_startup_page.current_page[chat_id] = page
+    
+    startups, total = get_active_startups(page, per_page=1)  # 1 per page for better experience
     
     if not startups:
-        bot.send_message(chat_id, "📭 <b>Hozircha startup mavjud emas.</b>", reply_markup=create_back_button())
+        bot.send_message(chat_id, "📭 <b>Hozircha startup mavjud emas.</b>\n\n🚀 <i>@GarajHub_uz bilan o'zingizning startupingizni yarating!</i>", reply_markup=create_back_button())
         return
     
     startup = startups[0]
     user = get_user(startup['owner_id'])
     owner_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() if user else "Noma'lum"
+    owner_contact = f"@{user.get('username', '')}" if user and user.get('username') else owner_name
     
     total_pages = max(1, total)
     
     text = (
-        f"<b>🌐 Startuplar</b>\n"
-        f"📄 Sahifa: <b>{page}/{total_pages}</b>\n\n"
-        f"🎯 <b>{startup['name']}</b>\n"
-        f"📌 {startup['description'][:200]}...\n"
-        f"👤 <b>Muallif:</b> {owner_name}"
+        f"🎯 <b>{startup['name']}</b>\n\n"
+        f"📌 <b>Tavsif:</b>\n{startup['description']}\n\n"
+        f"👤 <b>Muallif:</b> {owner_contact}\n\n"
+        f"📄 <b>Sahifa:</b> {page}/{total_pages}"
     )
     
     markup = InlineKeyboardMarkup()
@@ -663,17 +668,22 @@ def handle_join_startup(call):
             # Foydalanuvchiga xabar
             bot.answer_callback_query(call.id, "✅ So'rov yuborildi. Startup egasi tasdiqlasa, sizga xabar yuboriladi.", show_alert=True)
             
-            # Send notification to startup owner
+            # Send notification to startup owner - GUARANTEED
             startup = get_startup(startup_id)
             user = get_user(user_id)
             
             if startup and user:
+                user_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or "Noma'lum"
+                phone = user.get('phone', '📞 O'rnatilmagan')
+                bio = user.get('bio', '—')
+                
                 text = (
-                    f"🆕 <b>Startupga qo'shilish so'rovi</b>\n\n"
-                    f"👤 <b>Foydalanuvchi:</b> {user.get('first_name', '')} {user.get('last_name', '')}\n"
-                    f"📱 <b>Telefon:</b> {user.get('phone', '—')}\n"
-                    f"📝 <b>Bio:</b> {user.get('bio', '—')}\n\n"
-                    f"🎯 <b>Startup:</b> {startup['name']}"
+                    f"🆕 <b>STARTUPGA QO'SHILISH SO'ROVI</b>\n\n"
+                    f"🎯 <b>Startup:</b> {startup['name']}\n\n"
+                    f"👤 <b>Foydalanuvchi:</b> {user_name}\n"
+                    f"📱 <b>Telefon:</b> {phone}\n"
+                    f"📝 <b>Bio:</b> {bio}\n\n"
+                    f"⏳ <i>Tasdiqlash uchun tugmalarni bosing</i>"
                 )
                 
                 markup = InlineKeyboardMarkup()
@@ -683,9 +693,18 @@ def handle_join_startup(call):
                 )
                 
                 try:
-                    bot.send_message(startup['owner_id'], text, reply_markup=markup)
+                    # Send to owner with photo if available
+                    if user.get('photo_id'):  # If stored
+                        bot.send_message(startup['owner_id'], text, reply_markup=markup)
+                    else:
+                        bot.send_message(startup['owner_id'], text, reply_markup=markup)
+                    logging.info(f"So'rov yuborildi: user_id={user_id}, startup_id={startup_id}, owner_id={startup['owner_id']}")
                 except Exception as e:
-                    logging.error(f"Egaga xabar yuborishda xatolik: {e}")
+                    logging.error(f"Egaga xabar yuborishda XATOLIK: {e}") 
+                    # Fallback - inform user
+                    bot.send_message(call.message.chat.id, f"⚠️ Egaga xabar yuborilishda muammo. Direktno @{startup['owner_id']} ga yozing.", show_alert=False)
+            else:
+                logging.error(f"Startup yoki user topilmadi: startup={startup}, user={user}")
     except Exception as e:
         logging.error(f"Join startup xatosi: {e}")
         bot.answer_callback_query(call.id, "⚠️ Xatolik yuz berdi!", show_alert=True)
@@ -1225,7 +1244,10 @@ def process_startup_group_link(message, data):
     
     bot.send_message(message.chat.id, 
                     "✅ <b>Startup yaratildi va tekshiruvga yuborildi!</b>\n\n"
-                    "⏳ <i>Administrator tekshirgandan so'ng kanalga joylanadi.</i>", 
+                    "⏳ <i>Administrator tekshirgandan so'ng kanalga joylanadi.</i>\n\n"
+                    "🚀 <b>Boshqa startuplar:</b> /startups\n"
+                    "📌 <b>Mening startuplarim:</b> /mystartups\n"
+                    "🌐 <b>Kanalga qo'shiling:</b> @GarajHub_uz", 
                     reply_markup=create_back_button())
     
     clear_user_state(user_id)
